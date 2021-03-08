@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 set -e
-shopt -s globstar
 
 download_genesis()
 {
     echo_s "💾 Downloading $NETWORK genesis"
     curl -sS $NETWORK_URL/$NETWORK/genesis.json -o $CM_GENESIS
 }
+shopt -s globstar
 download_binary()
 {
     echo_s "💾 Downloading $NETWORK binary"
