@@ -37,11 +37,17 @@ StopService()
     echo_s "Stopping chain-maind service"
     sudo systemctl stop chain-maind.service
 }
+# Regenerate priv_validator_key.json
+RegenerateValidatorKey()
+{
+    rm -f $CM_HOME/config/priv_validator_key.json;
+    echo_s "A new priv_validator_key.json with pubkey: \033[32m$($CM_BINARY tendermint show-validator --home $CM_HOME 2>&1)\033[0m\n"
+}
 # Regenerate node_key.json
 RegenerateNodeKeyJSON()
 {
     echo_s "Generate and replace node_key in $NODE_KEY_PATH\n"
-    rm $CM_HOME/config/node_key.json
+    rm -f $CM_HOME/config/node_key.json
     $CM_BINARY tendermint show-node-id --home $CM_HOME > /dev/null 2>&1
     ShowNodeKeyInfo
 }
@@ -165,14 +171,13 @@ VALIDATOR_KEY="$CM_HOME/config/priv_validator_key.json"
 if [[ -f "$VALIDATOR_KEY" ]]; then
     read -p "❗️ $VALIDATOR_KEY already exists! Do you want to override old key? (Y/N): " yn
     case $yn in
-        [Yy]* ) rm $CM_HOME/config/priv_validator_key.json; $CM_BINARY tendermint show-validator --home $CM_HOME;;
-        * )  "Keep the original priv_validator_key.json in $VALIDATOR_KEY with pubkey:"; $CM_BINARY tendermint show-validator --home $CM_HOME;;
+        [Yy]* ) RegenerateValidatorKey;;
+        * )  "Keep the original priv_validator_key.json in $VALIDATOR_KEY with pubkey: \033[32m$($CM_BINARY tendermint show-validator --home $CM_HOME 2>&1)\033[0m";;
     esac
 else
-    echo_s "A new priv_validator_key.json with pubkey:"
-    $CM_BINARY tendermint show-validator --home $CM_HOME
+    RegenerateValidatorKey
 fi
-echo_s "Please make sure you have a backup of $VALIDATOR_KEY in case of unexpected accidents"
+echo_s "💡 Please make sure you have a backup of $VALIDATOR_KEY in case of unexpected accidents!\n"
 
 # Config .chain-maind/config/config.toml
 echo_s "Replace moniker in $CM_CONFIG"
@@ -222,4 +227,4 @@ EnableFunction
 sudo systemctl restart chain-maind.service
 sudo systemctl restart rsyslog
 
-echo_s "👀 View the log by \"\033[36mjournalctl -u chain-maind.service -f\033[0m\" or find in /chain/log/chain-maind/chain-maind.log"
+echo_s "👀 View the log by \"\033[32mjournalctl -u chain-maind.service -f\033[0m\" or find in /chain/log/chain-maind/chain-maind.log"
